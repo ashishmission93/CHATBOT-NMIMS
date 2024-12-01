@@ -1,15 +1,18 @@
 // Global Variables
 let activityLog = []; // To store user activity for the activity log
-let darkMode = false; // To track dark mode status
+let darkMode = false; // To track the dark mode status
+let notificationsEnabled = true; // To track notification status
 
-// Function to display messages dynamically in the chat
+// Function to append messages dynamically
 function appendMessage(message, sender) {
     const chatDisplay = document.getElementById("chatDisplay");
 
+    // Create message container
     const messageElement = document.createElement("div");
     messageElement.className = `chat-message ${sender}`;
     messageElement.innerHTML = `<p>${message}</p>`;
 
+    // Append the message
     chatDisplay.appendChild(messageElement);
     chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to the latest message
 
@@ -21,7 +24,7 @@ function appendMessage(message, sender) {
     }
 }
 
-// Function to send a query/message
+// Function to handle sending a message
 function sendMessage() {
     const queryInput = document.getElementById("queryInput");
     const message = queryInput.value.trim();
@@ -31,9 +34,8 @@ function sendMessage() {
         return;
     }
 
-    appendMessage(message, "user"); // Append the user's message to the chat
-
-    queryInput.value = ""; // Clear input field
+    appendMessage(message, "user"); // Display user's message
+    queryInput.value = ""; // Clear the input field
 
     // Simulate bot typing
     appendTypingIndicator();
@@ -64,7 +66,7 @@ function sendMessage() {
         });
 }
 
-// Function to upload a PDF file
+// Function to handle PDF upload
 function uploadPDF() {
     const pdfUpload = document.getElementById("pdfUpload").files[0];
 
@@ -99,7 +101,7 @@ function uploadPDF() {
         });
 }
 
-// Function to append a typing indicator
+// Function to append typing indicator
 function appendTypingIndicator() {
     const chatDisplay = document.getElementById("chatDisplay");
 
@@ -117,7 +119,7 @@ function appendTypingIndicator() {
     chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to the typing indicator
 }
 
-// Function to remove the typing indicator
+// Function to remove typing indicator
 function removeTypingIndicator() {
     const typingIndicator = document.getElementById("typingIndicator");
     if (typingIndicator) {
@@ -125,13 +127,13 @@ function removeTypingIndicator() {
     }
 }
 
-// Function to log activity
+// Function to log user activity
 function logActivity(activity) {
     const timestamp = new Date().toLocaleTimeString();
     activityLog.push(`[${timestamp}] ${activity}`);
 }
 
-// Function to show the activity log modal
+// Function to show activity log modal
 function showActivityLog() {
     const activityLogModal = document.getElementById("activityLogModal");
     const activityLogList = document.getElementById("activityLog");
@@ -181,8 +183,10 @@ function adjustTextSize() {
     showNotification(`Text size adjusted to ${textSize}.`, "info");
 }
 
-// Function to show a notification
+// Function to show notifications
 function showNotification(message, type = "info") {
+    if (!notificationsEnabled) return;
+
     const notification = document.createElement("div");
     notification.className = `notification ${type}`;
     notification.textContent = message;
@@ -195,7 +199,7 @@ function showNotification(message, type = "info") {
     }, 3000);
 }
 
-// Function to display the help modal
+// Function to show the help modal
 function showHelp() {
     const helpModal = document.getElementById("helpModal");
     helpModal.style.display = "flex";
@@ -219,7 +223,7 @@ function closeSettings() {
     settingsModal.style.display = "none";
 }
 
-// Add event listener for modal close on outside click
+// Add event listener for closing modals on outside click
 window.addEventListener("click", (event) => {
     const helpModal = document.getElementById("helpModal");
     const activityLogModal = document.getElementById("activityLogModal");
