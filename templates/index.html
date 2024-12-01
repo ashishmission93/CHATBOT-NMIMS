@@ -3,70 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Chatbot</title>
+    <title>Colorful Chatbot</title>
     <link rel="stylesheet" href="/static/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <header>
-        <nav class="navbar">
-            <div class="logo">
-                <h2>PDF Chatbot</h2>
+    <!-- Chat Application -->
+    <div class="chat-app colorful">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="user-profile">
+                <img src="/static/user-avatar.png" alt="User Avatar" class="user-avatar">
+                <h2>PDF Assistant</h2>
+                <p>Effortlessly interact with your documents!</p>
             </div>
-            <ul class="nav-links">
-                <li><a href="#upload">Upload</a></li>
-                <li><a href="#chat">Chat</a></li>
-                <li><a href="#response">Response</a></li>
+            <ul class="sidebar-menu">
+                <li>
+                    <button onclick="showHelp()">
+                        <span class="material-icons">help_outline</span>
+                        Help
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showActivityLog()">
+                        <span class="material-icons">history</span>
+                        Activity Log
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSettings()">
+                        <span class="material-icons">settings</span>
+                        Settings
+                    </button>
+                </li>
+                <li>
+                    <button onclick="logout()">
+                        <span class="material-icons">logout</span>
+                        Logout
+                    </button>
+                </li>
             </ul>
-        </nav>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Welcome to the PDF Chatbot</h1>
-            <p>Upload a PDF and ask any question to get instant answers!</p>
-            <a href="#upload" class="btn-primary">Get Started</a>
         </div>
-    </section>
 
-    <!-- Upload Section -->
-    <section id="upload" class="section">
-        <div class="section-container">
-            <h2 class="section-title">Upload Your PDF</h2>
-            <div class="upload-section">
-                <input type="file" id="pdfUpload" accept=".pdf" class="file-input">
-                <button onclick="uploadPDF()" class="btn-secondary">Upload PDF</button>
+        <!-- Main Chat Section -->
+        <div class="chat-main">
+            <!-- Header -->
+            <header class="chat-header colorful-header">
+                <div class="chat-info">
+                    <img src="/static/bot-avatar.png" alt="Bot Avatar" class="bot-avatar">
+                    <div>
+                        <h3>Chatbot Assistant</h3>
+                        <p id="status">Online</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" title="Notifications">
+                        <span class="material-icons">notifications_active</span>
+                    </button>
+                    <button class="header-btn" title="Settings">
+                        <span class="material-icons">settings</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Display -->
+            <div class="chat-display" id="chatDisplay">
+                <!-- Dynamic messages will be appended here -->
+            </div>
+
+            <!-- Input Section -->
+            <div class="chat-input colorful-input">
+                <label for="pdfUpload" class="upload-btn" title="Upload PDF">
+                    <span class="material-icons">attach_file</span>
+                </label>
+                <input type="file" id="pdfUpload" accept=".pdf" hidden onchange="uploadPDF()" />
+                <input
+                    type="text"
+                    id="queryInput"
+                    class="chat-text-input"
+                    placeholder="Type your message here..."
+                    aria-label="Type your message"
+                />
+                <button onclick="sendMessage()" class="send-btn" title="Send Message">
+                    <span class="material-icons">send</span>
+                </button>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Chat Section -->
-    <section id="chat" class="section">
-        <div class="section-container">
-            <h2 class="section-title">Ask Your Question</h2>
-            <div class="chat-section">
-                <textarea id="query" class="query-input" placeholder="Enter your question here..."></textarea>
-                <button onclick="askQuery()" class="btn-secondary">Ask</button>
-            </div>
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal" style="display: none;">
+        <div class="modal-content colorful-modal">
+            <h2>Need Help?</h2>
+            <p>Follow these simple steps to get started:</p>
+            <ol>
+                <li>Click the <span class="material-icons">attach_file</span> icon to upload a PDF.</li>
+                <li>Type your question in the input box.</li>
+                <li>Press the <span class="material-icons">send</span> button to send your query.</li>
+                <li>Use the <span class="material-icons">settings</span> icon to customize your experience.</li>
+            </ol>
+            <button onclick="closeHelp()" class="close-btn colorful-btn">Close</button>
         </div>
-    </section>
+    </div>
 
-    <!-- Response Section -->
-    <section id="response" class="section">
-        <div class="section-container">
-            <h2 class="section-title">Response</h2>
-            <div class="response-box">
-                <h3>AI Response:</h3>
-                <div id="response" class="response-content"></div>
-            </div>
+    <!-- Activity Log Modal -->
+    <div class="modal" id="activityLogModal" style="display: none;">
+        <div class="modal-content colorful-modal">
+            <h2>Your Activity Log</h2>
+            <ul id="activityLog" class="activity-log-list">
+                <!-- Activity log items will be dynamically loaded here -->
+            </ul>
+            <button onclick="closeActivityLog()" class="close-btn colorful-btn">Close</button>
         </div>
-    </section>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal" style="display: none;">
+        <div class="modal-content colorful-modal">
+            <h2>Settings</h2>
+            <label>
+                <input type="checkbox" id="notificationsToggle" checked>
+                Enable Notifications
+            </label>
+            <label>
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+                Dark Mode
+            </label>
+            <label>
+                Text Size:
+                <select id="textSize" onchange="adjustTextSize()">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </label>
+            <button onclick="closeSettings()" class="close-btn colorful-btn">Save & Close</button>
+        </div>
+    </div>
 
     <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 PDF Chatbot. All Rights Reserved.</p>
+    <footer class="chat-footer colorful-footer">
+        <p>&copy; 2024 PDF Chatbot | Designed for seamless interactions!</p>
     </footer>
 
     <script src="/static/scripts.js"></script>
