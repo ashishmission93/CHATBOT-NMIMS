@@ -3,25 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot with PDF</title>
+    <title>PDF Chatbot</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Chatbot with PDF</h1>
-        <div class="upload-section">
-            <input type="file" id="pdfUpload" accept=".pdf">
-            <button onclick="uploadPDF()">Upload PDF</button>
+    <!-- Navigation Bar -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <h2>PDF Chatbot</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#upload">Upload</a></li>
+                <li><a href="#chat">Chat</a></li>
+                <li><a href="#response">Response</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Welcome to the PDF Chatbot</h1>
+            <p>Upload a PDF and ask any question to get instant answers!</p>
+            <a href="#upload" class="btn-primary">Get Started</a>
         </div>
-        <div class="chat-section">
-            <textarea id="query" placeholder="Enter your question here..."></textarea>
-            <button onclick="askQuery()">Ask</button>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="section">
+        <div class="section-container">
+            <h2 class="section-title">Upload Your PDF</h2>
+            <div class="upload-section">
+                <input type="file" id="pdfUpload" accept=".pdf" class="file-input">
+                <button onclick="uploadPDF()" class="btn-secondary">Upload PDF</button>
+            </div>
         </div>
-        <div class="response-section">
-            <h2>Response:</h2>
-            <div id="response"></div>
+    </section>
+
+    <!-- Chat Section -->
+    <section id="chat" class="section">
+        <div class="section-container">
+            <h2 class="section-title">Ask Your Question</h2>
+            <div class="chat-section">
+                <textarea id="query" class="query-input" placeholder="Enter your question here..."></textarea>
+                <button onclick="askQuery()" class="btn-secondary">Ask</button>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Response Section -->
+    <section id="response" class="section">
+        <div class="section-container">
+            <h2 class="section-title">Response</h2>
+            <div class="response-box">
+                <h3>AI Response:</h3>
+                <div id="response" class="response-content"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 PDF Chatbot. All Rights Reserved.</p>
+    </footer>
+
     <script src="/static/scripts.js"></script>
 </body>
 </html>
