@@ -4,3 +4,7 @@ python-dotenv==0.20.0
 gunicorn==20.1.0
 Werkzeug==2.2.3
 openai==1.52.2
+flask
+PyPDF2
+openai
+gunicorn
