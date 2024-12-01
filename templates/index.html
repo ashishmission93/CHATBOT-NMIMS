@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Colorful Chatbot</title>
+    <title>PDF Assistant</title>
     <link rel="stylesheet" href="/static/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-    <!-- Chat Application -->
-    <div class="chat-app colorful">
+    <div class="chat-app">
         <!-- Sidebar -->
         <div class="chat-sidebar">
             <div class="user-profile">
@@ -49,7 +48,7 @@
         <!-- Main Chat Section -->
         <div class="chat-main">
             <!-- Header -->
-            <header class="chat-header colorful-header">
+            <header class="chat-header">
                 <div class="chat-info">
                     <img src="/static/bot-avatar.png" alt="Bot Avatar" class="bot-avatar">
                     <div>
@@ -59,7 +58,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="header-btn" title="Notifications">
-                        <span class="material-icons">notifications_active</span>
+                        <span class="material-icons">notifications</span>
                     </button>
                     <button class="header-btn" title="Settings">
                         <span class="material-icons">settings</span>
@@ -69,11 +68,11 @@
 
             <!-- Chat Display -->
             <div class="chat-display" id="chatDisplay">
-                <!-- Dynamic messages will be appended here -->
+                <!-- Messages will dynamically load here -->
             </div>
 
             <!-- Input Section -->
-            <div class="chat-input colorful-input">
+            <div class="chat-input">
                 <label for="pdfUpload" class="upload-btn" title="Upload PDF">
                     <span class="material-icons">attach_file</span>
                 </label>
@@ -92,59 +91,9 @@
         </div>
     </div>
 
-    <!-- Help Modal -->
-    <div class="modal" id="helpModal" style="display: none;">
-        <div class="modal-content colorful-modal">
-            <h2>Need Help?</h2>
-            <p>Follow these simple steps to get started:</p>
-            <ol>
-                <li>Click the <span class="material-icons">attach_file</span> icon to upload a PDF.</li>
-                <li>Type your question in the input box.</li>
-                <li>Press the <span class="material-icons">send</span> button to send your query.</li>
-                <li>Use the <span class="material-icons">settings</span> icon to customize your experience.</li>
-            </ol>
-            <button onclick="closeHelp()" class="close-btn colorful-btn">Close</button>
-        </div>
-    </div>
-
-    <!-- Activity Log Modal -->
-    <div class="modal" id="activityLogModal" style="display: none;">
-        <div class="modal-content colorful-modal">
-            <h2>Your Activity Log</h2>
-            <ul id="activityLog" class="activity-log-list">
-                <!-- Activity log items will be dynamically loaded here -->
-            </ul>
-            <button onclick="closeActivityLog()" class="close-btn colorful-btn">Close</button>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal" style="display: none;">
-        <div class="modal-content colorful-modal">
-            <h2>Settings</h2>
-            <label>
-                <input type="checkbox" id="notificationsToggle" checked>
-                Enable Notifications
-            </label>
-            <label>
-                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
-                Dark Mode
-            </label>
-            <label>
-                Text Size:
-                <select id="textSize" onchange="adjustTextSize()">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="large">Large</option>
-                </select>
-            </label>
-            <button onclick="closeSettings()" class="close-btn colorful-btn">Save & Close</button>
-        </div>
-    </div>
-
     <!-- Footer -->
-    <footer class="chat-footer colorful-footer">
-        <p>&copy; 2024 PDF Chatbot | Designed for seamless interactions!</p>
+    <footer class="chat-footer">
+        <p>&copy; 2024 PDF Chatbot. Designed for seamless interactions!</p>
     </footer>
 
     <script src="/static/scripts.js"></script>
