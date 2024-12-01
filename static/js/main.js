@@ -1,160 +1,174 @@
-/* General Styles */
-body {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-    color: #333;
-    background: #f3f4f6;
+// Function to display success, error, or info messages dynamically
+function showMessage(message, type = "success") {
+    const messageBox = document.createElement("div");
+    messageBox.className = `message-box ${type}`;
+    messageBox.innerText = message;
+    document.body.appendChild(messageBox);
+
+    // Automatically remove the message after 3 seconds
+    setTimeout(() => {
+        messageBox.remove();
+    }, 3000);
 }
 
-/* Navbar Styles */
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #4CAF50;
-    padding: 10px 20px;
-    color: white;
+// Function to upload a PDF
+function uploadPDF() {
+    const pdfUpload = document.getElementById("pdfUpload").files[0]; // Get the file input
+
+    if (!pdfUpload) {
+        showMessage("Please select a PDF file to upload!", "error");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("pdf", pdfUpload);
+
+    // Show a message for the upload process
+    showMessage("Uploading PDF...", "info");
+
+    fetch("/upload", {
+        method: "POST",
+        body: formData
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.error) {
+                showMessage(`Error: ${data.error}`, "error");
+            } else {
+                showMessage("PDF uploaded successfully!", "success");
+            }
+        })
+        .catch((error) => {
+            console.error("Error uploading PDF:", error);
+            showMessage("Failed to upload the PDF. Please try again.", "error");
+        });
 }
 
-.navbar .logo h2 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 700;
+// Function to send a query and fetch a response
+function askQuery() {
+    const queryInput = document.getElementById("query"); // Get the textarea input
+    const query = queryInput.value.trim();
+
+    if (!query) {
+        showMessage("Please enter a question!", "error");
+        return;
+    }
+
+    const askButton = document.querySelector(".btn-secondary");
+    askButton.disabled = true; // Disable the button to prevent multiple submissions
+
+    showMessage("Processing your query...", "info");
+
+    fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query })
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.error) {
+                showMessage(`Error: ${data.error}`, "error");
+            } else {
+                const responseBox = document.getElementById("response");
+                responseBox.innerHTML = `<p>${data.response}</p>`;
+                showMessage("Response received!", "success");
+            }
+        })
+        .catch((error) => {
+            console.error("Error processing query:", error);
+            showMessage("Failed to process your query. Please try again.", "error");
+        })
+        .finally(() => {
+            askButton.disabled = false; // Re-enable the button
+        });
 }
 
-.navbar .nav-links {
-    list-style: none;
-    display: flex;
-    gap: 15px;
-    margin: 0;
-}
+// Smooth scrolling for navigation links
+document.querySelectorAll(".nav-links a").forEach((link) => {
+    link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const targetId = link.getAttribute("href").slice(1);
+        const targetElement = document.getElementById(targetId);
 
-.navbar .nav-links li a {
-    color: white;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 500;
-}
+        if (targetElement) {
+            targetElement.scrollIntoView({ behavior: "smooth" });
+        }
+    });
+});
 
-.navbar .nav-links li a:hover {
-    text-decoration: underline;
-}
+// Adding animations when sections come into the viewport
+const observerOptions = {
+    threshold: 0.5 // Trigger when 50% of the section is visible
+};
 
-/* Hero Section */
-.hero {
-    background: linear-gradient(to right, #4caf50, #81c784);
-    color: white;
-    text-align: center;
-    padding: 60px 20px;
-}
+const observerCallback = (entries, observer) => {
+    entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+        }
+    });
+};
 
-.hero h1 {
-    font-size: 36px;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
+const observer = new IntersectionObserver(observerCallback, observerOptions);
 
-.hero p {
-    font-size: 18px;
-    margin-bottom: 20px;
-}
+// Observing all sections for animations
+document.querySelectorAll(".section").forEach((section) => {
+    observer.observe(section);
+});
 
-.hero .btn-primary {
-    background: #ffffff;
-    color: #4caf50;
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: bold;
-}
+// Dynamically add CSS classes for notifications
+const style = document.createElement("style");
+style.innerHTML = `
+    .message-box {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        z-index: 1000;
+        opacity: 0.95;
+    }
 
-.hero .btn-primary:hover {
-    background: #e0e0e0;
-}
+    .message-box.success {
+        background-color: #4caf50;
+        color: white;
+    }
 
-/* Section Styles */
-.section {
-    padding: 40px 20px;
-}
+    .message-box.error {
+        background-color: #f44336;
+        color: white;
+    }
 
-.section-container {
-    max-width: 800px;
-    margin: 0 auto;
-    text-align: center;
-}
+    .message-box.info {
+        background-color: #2196f3;
+        color: white;
+    }
 
-.section-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 20px;
-}
+    .message-box.warning {
+        background-color: #ff9800;
+        color: white;
+    }
 
-/* Upload Section */
-.upload-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+    .section.visible {
+        animation: fadeIn 0.8s ease-in-out;
+        opacity: 1;
+    }
 
-.file-input {
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-/* Chat Section */
-.chat-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.query-input {
-    width: 100%;
-    max-width: 600px;
-    height: 100px;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-/* Buttons */
-.btn-secondary {
-    background: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-.btn-secondary:hover {
-    background: #45a049;
-}
-
-/* Response Section */
-.response-box {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.response-content {
-    font-size: 16px;
-    text-align: left;
-    color: #555;
-}
-
-/* Footer */
-footer {
-    text-align: center;
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 0;
-    margin-top: 20px;
-}
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
