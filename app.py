@@ -1,93 +1,74 @@
-import os
-import openai
 from flask import Flask, render_template, request, jsonify
-from dotenv import load_dotenv
-import time
-import logging
+from PyPDF2 import PdfReader
+import openai
+import os
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Initialize Flask app
 app = Flask(__name__)
 
-# Set OpenAI API key
+# Set your OpenAI API Key from the environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Check if the API key is set
-if not openai.api_key:
-    raise ValueError("OpenAI API key is missing. Please set it in the .env file.")
+# Variable to store extracted PDF text
+pdf_content = ""
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+# Function to extract text from a PDF
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    reader = PdfReader(pdf_path)
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
 
-# A global list to maintain conversation history between the user and the bot
-conversation_history = []
+# Function to query OpenAI GPT
+def query_gpt(prompt):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant to answer queries based on a PDF."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response['choices'][0]['message']['content'].strip()
+    except Exception as e:
+        return f"Error querying OpenAI: {e}"
 
-# Helper function to format messages with timestamps
-def format_message(sender, message):
-    timestamp = time.strftime("%H:%M:%S", time.localtime())
-    return {"sender": sender, "message": message, "timestamp": timestamp}
-
-# Home route that loads the chat interface
+# Home page route
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Chat endpoint to handle user messages
+# Route to upload PDF and extract text
+@app.route("/upload", methods=["POST"])
+def upload_pdf():
+    global pdf_content
+    pdf_file = request.files.get("pdf")
+    if not pdf_file:
+        return jsonify({"error": "No PDF file provided"}), 400
+
+    # Save and read the PDF
+    pdf_path = "./uploaded.pdf"
+    pdf_file.save(pdf_path)
+    pdf_content = extract_text_from_pdf(pdf_path)
+
+    return jsonify({"message": "PDF uploaded and text extracted successfully."}), 200
+
+# Route to handle chat queries
 @app.route("/chat", methods=["POST"])
-def chat():
-    user_message = request.json.get("message")
-    
-    if not user_message:
-        return jsonify({"response": "Please enter a message to start the chat!"})
+def chat_with_pdf():
+    global pdf_content
+    query = request.json.get("query", "")
+    if not query:
+        return jsonify({"error": "No query provided"}), 400
 
-    # Append the user's message to the conversation history
-    conversation_history.append(format_message("You", user_message))
-    
-    try:
-        # Insert initial conversation context to make the bot behave like a hotel concierge
-        messages = [{"role": "system", "content": "You are a helpful hotel concierge bot."}]
-        
-        # Add the conversation history (user and bot messages) to provide context
-        for msg in conversation_history:
-            role = "user" if msg["sender"] == "You" else "assistant"
-            messages.append({"role": role, "content": msg["message"]})
+    if not pdf_content:
+        return jsonify({"error": "No PDF content available. Please upload a PDF first."}), 400
 
-        # Call the OpenAI API with the conversation history to get a dynamic response from GPT-4
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=messages,
-            max_tokens=300
-        )
-        
-        # Extract the bot's response
-        bot_response = response.choices[0].message["content"].strip()
-        
-        # Append the bot's response to the conversation history
-        conversation_history.append(format_message("Bot", bot_response))
-        
-    except openai.error.InvalidRequestError as e:
-        bot_response = "Sorry, there was a problem with the request. Please try again later."
-        logging.error(f"InvalidRequestError: {e}")
-        
-    except openai.error.RateLimitError as e:
-        bot_response = "Sorry, I'm receiving too many requests at the moment. Please try again after a few seconds."
-        logging.error(f"RateLimitError: {e}")
-        
-    except Exception as e:
-        bot_response = "Sorry, I couldn't process your request. Please try again."
-        logging.error(f"Error occurred: {e}")
+    # Generate a prompt for OpenAI API
+    prompt = f"Use the following content to answer the query:\n\n{pdf_content}\n\nQuery: {query}"
+    response = query_gpt(prompt)
 
-    # Return the bot's response as JSON
-    return jsonify({"response": bot_response, "history": conversation_history})
-
-# Endpoint to clear the conversation history (to restart the chat)
-@app.route("/clear_chat", methods=["POST"])
-def clear_chat():
-    global conversation_history
-    conversation_history = []
-    return jsonify({"message": "Chat history cleared successfully!"})
+    return jsonify({"response": response}), 200
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
