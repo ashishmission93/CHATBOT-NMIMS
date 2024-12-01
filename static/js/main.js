@@ -1,127 +1,237 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp-Like Chatbot</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <!-- Main Chat Application -->
-    <div class="chat-app">
-        <!-- Sidebar Section -->
-        <div class="chat-sidebar">
-            <div class="user-profile">
-                <img src="/static/user-avatar.png" alt="User Avatar" class="user-avatar">
-                <h2>PDF Assistant</h2>
-                <p>Get instant answers from your uploaded PDF!</p>
-            </div>
-            <ul class="chat-actions">
-                <li><button onclick="showHelp()">📖 Help</button></li>
-                <li><button onclick="showActivityLog()">📝 Activity Log</button></li>
-                <li><button onclick="showSettings()">⚙️ Settings</button></li>
-                <li><button onclick="logout()">🚪 Logout</button></li>
-            </ul>
+// Global Variables
+let activityLog = []; // To store user activity for the activity log
+let darkMode = false; // To track dark mode status
+
+// Function to display messages dynamically in the chat
+function appendMessage(message, sender) {
+    const chatDisplay = document.getElementById("chatDisplay");
+
+    const messageElement = document.createElement("div");
+    messageElement.className = `chat-message ${sender}`;
+    messageElement.innerHTML = `<p>${message}</p>`;
+
+    chatDisplay.appendChild(messageElement);
+    chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to the latest message
+
+    // Log activity
+    if (sender === "user") {
+        logActivity(`User: ${message}`);
+    } else if (sender === "bot") {
+        logActivity(`Bot: ${message}`);
+    }
+}
+
+// Function to send a query/message
+function sendMessage() {
+    const queryInput = document.getElementById("queryInput");
+    const message = queryInput.value.trim();
+
+    if (!message) {
+        showNotification("Please type a message before sending!", "error");
+        return;
+    }
+
+    appendMessage(message, "user"); // Append the user's message to the chat
+
+    queryInput.value = ""; // Clear input field
+
+    // Simulate bot typing
+    appendTypingIndicator();
+
+    fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query: message })
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            removeTypingIndicator();
+            if (data.error) {
+                appendMessage("Something went wrong. Please try again.", "bot");
+                showNotification("Error: Unable to process your query.", "error");
+            } else {
+                appendMessage(data.response, "bot");
+                showNotification("Bot responded successfully!", "success");
+            }
+        })
+        .catch((error) => {
+            removeTypingIndicator();
+            appendMessage("Failed to connect to the server. Please try again.", "bot");
+            console.error("Error:", error);
+            showNotification("Network error. Check your connection.", "error");
+        });
+}
+
+// Function to upload a PDF file
+function uploadPDF() {
+    const pdfUpload = document.getElementById("pdfUpload").files[0];
+
+    if (!pdfUpload) {
+        showNotification("Please select a PDF file to upload.", "error");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("pdf", pdfUpload);
+
+    showNotification("Uploading PDF...", "info");
+
+    fetch("/upload", {
+        method: "POST",
+        body: formData
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.error) {
+                appendMessage("Failed to upload PDF. Please try again.", "bot");
+                showNotification("Error: Unable to upload PDF.", "error");
+            } else {
+                appendMessage("PDF uploaded successfully! You can now ask questions.", "bot");
+                showNotification("PDF uploaded successfully!", "success");
+            }
+        })
+        .catch((error) => {
+            appendMessage("Failed to upload the PDF. Please try again.", "bot");
+            console.error("Error:", error);
+            showNotification("Network error. Check your connection.", "error");
+        });
+}
+
+// Function to append a typing indicator
+function appendTypingIndicator() {
+    const chatDisplay = document.getElementById("chatDisplay");
+
+    const typingElement = document.createElement("div");
+    typingElement.className = "chat-typing-indicator";
+    typingElement.id = "typingIndicator";
+    typingElement.innerHTML = `
+        <div class="typing-dots">
+            <span></span><span></span><span></span>
         </div>
+        <p>Bot is typing...</p>
+    `;
 
-        <!-- Main Chat Section -->
-        <div class="chat-main">
-            <!-- Chat Header -->
-            <header class="chat-header">
-                <div class="chat-info">
-                    <img src="/static/bot-avatar.png" alt="Bot Avatar" class="bot-avatar">
-                    <div>
-                        <h3>Chatbot Assistant</h3>
-                        <p id="status">Online</p>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button onclick="toggleNotifications()" class="header-btn" title="Toggle Notifications">🔔</button>
-                    <button onclick="openSettings()" class="header-btn" title="Settings">⚙️</button>
-                </div>
-            </header>
+    chatDisplay.appendChild(typingElement);
+    chatDisplay.scrollTop = chatDisplay.scrollHeight; // Auto-scroll to the typing indicator
+}
 
-            <!-- Chat Display Section -->
-            <div class="chat-display" id="chatDisplay">
-                <!-- Dynamic messages will be appended here -->
-            </div>
+// Function to remove the typing indicator
+function removeTypingIndicator() {
+    const typingIndicator = document.getElementById("typingIndicator");
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
 
-            <!-- Chat Input Section -->
-            <div class="chat-input">
-                <label for="pdfUpload" class="upload-btn" title="Upload PDF">📎</label>
-                <input type="file" id="pdfUpload" accept=".pdf" hidden onchange="uploadPDF()" />
-                <input
-                    type="text"
-                    id="queryInput"
-                    class="chat-text-input"
-                    placeholder="Type your message here..."
-                    aria-label="Type your message"
-                />
-                <button onclick="sendMessage()" class="send-btn" title="Send Message">➤</button>
-            </div>
-        </div>
-    </div>
+// Function to log activity
+function logActivity(activity) {
+    const timestamp = new Date().toLocaleTimeString();
+    activityLog.push(`[${timestamp}] ${activity}`);
+}
 
-    <!-- Help Modal -->
-    <div class="modal" id="helpModal" style="display: none;">
-        <div class="modal-content">
-            <h2>How to Use the Chatbot</h2>
-            <p>Follow these steps to get started with the PDF Assistant:</p>
-            <ol>
-                <li>Click the 📎 icon to upload your PDF.</li>
-                <li>Type your question in the input box.</li>
-                <li>Press "Send" to get your answer instantly.</li>
-                <li>Use the ⚙️ button to adjust your preferences.</li>
-                <li>View your activity log by clicking 📝 in the sidebar.</li>
-            </ol>
-            <button onclick="closeHelp()" class="close-btn">Close</button>
-        </div>
-    </div>
+// Function to show the activity log modal
+function showActivityLog() {
+    const activityLogModal = document.getElementById("activityLogModal");
+    const activityLogList = document.getElementById("activityLog");
 
-    <!-- Activity Log Modal -->
-    <div class="modal" id="activityLogModal" style="display: none;">
-        <div class="modal-content">
-            <h2>Activity Log</h2>
-            <p>Here’s a record of your recent activities:</p>
-            <ul id="activityLog">
-                <!-- Activity log items will be appended here dynamically -->
-            </ul>
-            <button onclick="closeActivityLog()" class="close-btn">Close</button>
-        </div>
-    </div>
+    // Clear existing log
+    activityLogList.innerHTML = "";
 
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal" style="display: none;">
-        <div class="modal-content">
-            <h2>Settings</h2>
-            <p>Customize your chatbot experience:</p>
-            <label>
-                Enable Notifications:
-                <input type="checkbox" id="notificationsToggle" checked>
-            </label>
-            <label>
-                Dark Mode:
-                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
-            </label>
-            <label>
-                Text Size:
-                <select id="textSize" onchange="adjustTextSize()">
-                    <option value="small">Small</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="large">Large</option>
-                </select>
-            </label>
-            <button onclick="closeSettings()" class="close-btn">Save & Close</button>
-        </div>
-    </div>
+    // Populate log items
+    activityLog.forEach((log) => {
+        const logItem = document.createElement("li");
+        logItem.textContent = log;
+        activityLogList.appendChild(logItem);
+    });
 
-    <!-- Footer -->
-    <footer class="chat-footer">
-        <p>&copy; 2024 PDF Chatbot. Designed for instant knowledge sharing!</p>
-    </footer>
+    activityLogModal.style.display = "flex";
+}
 
-    <!-- Scripts -->
-    <script src="/static/scripts.js"></script>
-</body>
-</html>
+// Function to close the activity log modal
+function closeActivityLog() {
+    const activityLogModal = document.getElementById("activityLogModal");
+    activityLogModal.style.display = "none";
+}
+
+// Function to toggle dark mode
+function toggleDarkMode() {
+    const body = document.body;
+    darkMode = !darkMode;
+
+    if (darkMode) {
+        body.classList.add("dark-mode");
+        showNotification("Dark mode enabled!", "success");
+    } else {
+        body.classList.remove("dark-mode");
+        showNotification("Dark mode disabled!", "info");
+    }
+}
+
+// Function to adjust text size
+function adjustTextSize() {
+    const textSize = document.getElementById("textSize").value;
+    const chatMessages = document.querySelectorAll(".chat-message p");
+
+    chatMessages.forEach((message) => {
+        message.style.fontSize = textSize === "small" ? "12px" : textSize === "large" ? "18px" : "14px";
+    });
+
+    showNotification(`Text size adjusted to ${textSize}.`, "info");
+}
+
+// Function to show a notification
+function showNotification(message, type = "info") {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Function to display the help modal
+function showHelp() {
+    const helpModal = document.getElementById("helpModal");
+    helpModal.style.display = "flex";
+}
+
+// Function to close the help modal
+function closeHelp() {
+    const helpModal = document.getElementById("helpModal");
+    helpModal.style.display = "none";
+}
+
+// Function to show settings modal
+function showSettings() {
+    const settingsModal = document.getElementById("settingsModal");
+    settingsModal.style.display = "flex";
+}
+
+// Function to close settings modal
+function closeSettings() {
+    const settingsModal = document.getElementById("settingsModal");
+    settingsModal.style.display = "none";
+}
+
+// Add event listener for modal close on outside click
+window.addEventListener("click", (event) => {
+    const helpModal = document.getElementById("helpModal");
+    const activityLogModal = document.getElementById("activityLogModal");
+    const settingsModal = document.getElementById("settingsModal");
+
+    if (event.target === helpModal) {
+        closeHelp();
+    }
+    if (event.target === activityLogModal) {
+        closeActivityLog();
+    }
+    if (event.target === settingsModal) {
+        closeSettings();
+    }
+});
